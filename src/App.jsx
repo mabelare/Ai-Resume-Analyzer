@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import Auth from "./auth.tsx";
+import Home from "./home.tsx";
 import { usePuterStore } from "./lib/puter";
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Auth />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/home" element={<Home />} />
     </Routes>
   );
 }
