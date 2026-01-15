@@ -54,7 +54,7 @@ const Auth = () => {
                   </button>
                 ) : (
                   <button
-                    className="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-full font-medium transition-colors"
+                    className="primary-gradient rounded-full py-2 px-8 cursor-pointer w-[300px] max-md:w-full text-xl font-semibold text-white bg-indigo-600"
                     onClick={auth.signIn}
                   >
                     Log In

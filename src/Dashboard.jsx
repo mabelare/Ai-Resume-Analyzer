@@ -12,7 +12,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!auth.isAuthenticated && !isLoading) {
-      navigate("/auth?next=/dashboard");
+      navigate("/auth?next=/");
     }
   }, [auth.isAuthenticated, isLoading, navigate]);
 
@@ -22,9 +22,7 @@ export default function Dashboard() {
       style={{ backgroundImage: `url(${bgSmall})` }}
     >
       <div className="max-w-7xl mx-auto">
-        <div
-          className="flex justify-between items-center mb-10 w-full bg-white/70 backdrop-blur-xl shadow-xl p-2 rounded-full"
-        >
+        <div className="flex justify-between items-center mb-10 w-full bg-white/70 backdrop-blur-xl shadow-xl p-2 rounded-full">
           <span className="px-4 py-2 text-sm md:text-base font-medium bg-gradient-to-r from-red-300 via-gray-950 to-indigo-300 bg-clip-text text-transparent">
             RESUMIND
           </span>

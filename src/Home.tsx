@@ -89,19 +89,18 @@ export default function Home() {
 
       console.log("Extracting feedback text...");
       const feedbackText =
-        typeof feedback.message.content === "string"
+        typeof feedback.message?.content === "string"
           ? feedback.message.content
-          : feedback.message.content[0].text;
+          : (feedback.message?.content as any)?.[0]?.text;
 
-      console.log("Feedback text:", feedbackText);
-      console.log("Parsing feedback JSON...");
       data.feedback = JSON.parse(feedbackText);
       console.log("Parsed feedback:", data.feedback);
 
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
       setStatusText("Analysis complete!");
 
-      console.log("Analysis saved with ID:", uuid);
+      console.log(data);
+      navigate(`/resume/${uuid}`);
 
       setIsProcessing(false);
     } catch (error) {
@@ -221,7 +220,7 @@ export default function Home() {
             </div>
 
             <button
-              type="sumbit"
+              type="submit"
               className="w-full py-2 mt-6 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium text-lg shadow-lg"
             >
               Analyze Resume

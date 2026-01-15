@@ -1,0 +1,110 @@
+import { useParams, Link, useNavigate } from "react-router-dom";
+import backsvg from "./assets/icons/back.svg";
+import bgSmall from "./assets/images/bg-small.svg";
+import resumeScan2 from "./assets/images/resume-scan-2.gif";
+import { useEffect, useState } from "react";
+import { usePuterStore } from "./lib/puter";
+import { Feedback } from "./types";
+
+export const meta = () => ({
+  title: "Resumind | Review",
+  name: "description",
+  content: "detailed overview of your resume ",
+});
+
+const Resume = () => {
+  const { auth, fs, kv, isLoading } = usePuterStore();
+  const { id } = useParams();
+
+  const [imageUrl, setImageUrl] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [feedback, setFeedback] = useState <Feedback | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !auth.isAuthenticated) {
+      navigate(`/auth?next=/resume/${id}`);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    const loadResume = async () => {
+      const resume = await kv.get(`resume:${id}`);
+
+      if (!resume) return;
+
+      const data = JSON.parse(resume);
+
+      const resumeBlob = await fs.read(data.resumePath);
+      if (!resumeBlob) return;
+
+      const pdfBlob = new Blob([resumeBlob], { type: "application/pdf" });
+      const resumeUrl = URL.createObjectURL(pdfBlob);
+      setResumeUrl(resumeUrl);
+
+      const imageBlob = await fs.read(data.imagePath);
+      if (!imageBlob) return;
+
+      const imageUrl = URL.createObjectURL(imageBlob);
+      setImageUrl(imageUrl);
+
+      setFeedback(data.feedback);
+      console.log({ resumeUrl, imageUrl, feedback: data.feedback });
+    };
+
+    loadResume();
+  }, [id]);
+
+  return (
+    <main className="pt-0">
+      <nav className="flex flex-row justify-between items-center p-4 border-gray-300">
+        <Link
+          to="/"
+          className="flex flex-row items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm"
+        >
+          <img src={backsvg} alt="logo" className="w-2.5 h-2.5" />
+          <span className="text-gray-800 text-sm font-semibold">
+            Back to Homepage
+          </span>
+        </Link>
+      </nav>
+
+      <div className="flex flex-row w-full max-lg:flex-col-reverse">
+        <section
+          className="flex flex-col items-center justify-center gap-8 w-1/2 px-8 max-lg:w-full py-6 bg-cover bg-center h-[100vh] sticky top-0 "
+          style={{ backgroundImage: `url(${bgSmall})` }}
+        >
+          {imageUrl && resumeUrl && (
+            <div className="animate-in fade-in duration-1000 gradient-border max-sm:m-0 h-[90%] max-wxl:h-fit w-fit ">
+              <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={imageUrl}
+                  className="w-full h-full object-contain rounded-2xl"
+                  title="resume"
+                />
+              </a>
+            </div>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-8 w-1/2 px-8 max-lg:w-full py-6">
+          <h2 className="text-4xl text-blak font-bold">Resume Review</h2>
+          {feedback ? (
+            <div className="flex flex-col gap-8 animate-in fade-in duration-1000 ">
+              <Summary feedback={feedback} />
+              <ATS
+                score={feedback.ATS.score || 0}
+                suggestions={feedback.ATS.tips || []}
+              />
+              <Details feedback={feedback} />
+            </div>
+          ) : (
+            <img src={resumeScan2} className="w-full " />
+          )}
+        </section>
+      </div>
+    </main>
+  );
+};
+
+export default Resume;
