@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { usePuterStore } from "./lib/puter";
 import { convertPdfToImage } from "./lib/pdf2img";
 import { generateUUID } from "./lib/utils";
-import { prepareInstructions } from "./Constants";
+import { prepareInstructions, AIResponseFormat } from "./Constants";
 
 export default function Home() {
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -30,50 +30,94 @@ export default function Home() {
     jobDescription: string;
     file: File;
   }) => {
-    setIsProcessing(true);
-    setStatusText("Uploading your resume...");
-    const uploadedFile = await fs.upload([file]);
+    try {
+      setIsProcessing(true);
+      setStatusText("Uploading your resume...");
+      const uploadedFile = await fs.upload([file]);
 
-    if (!uploadedFile) return setStatusText("Failed to upload file.");
-    setStatusText("Converting to image...");
-    const imageFile = await convertPdfToImage(file);
-    if (!imageFile.file)
-      return setStatusText("Failed to convert PDF to image.");
+      if (!uploadedFile) {
+        setStatusText("Failed to upload file.");
+        setIsProcessing(false);
+        return;
+      }
 
-    setStatusText("Uploading the image...");
-    const uploadedImage = await fs.upload([imageFile.file]);
+      setStatusText("Converting to image...");
+      const imageFile = await convertPdfToImage(file);
 
-    if (!uploadedImage) return setStatusText("Failed to upload image.");
+      if (!imageFile.file) {
+        setStatusText(imageFile.error || "Failed to convert PDF to image.");
+        setIsProcessing(false);
+        return;
+      }
 
-    setStatusText("Preparing data...");
+      setStatusText("Uploading the image...");
+      const uploadedImage = await fs.upload([imageFile.file]);
 
-    const uuid = generateUUID();
-    const data = {
-      id: uuid,
-      resumePath: uploadedFile.path,
-      imagePath: uploadedImage.path,
-      companyName,
-      jobTitle,
-      jobDescription,
-      feedback: "",
-    };
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
-    setStatusText("Analyzing...");
+      if (!uploadedImage) {
+        setStatusText("Failed to upload image.");
+        setIsProcessing(false);
+        return;
+      }
 
-    const feedback = await ai.feedback({
-      path: uploadedFile.path,
-      message: prepareInstructions({ jobTitle, jobDescription }),
-    });
+      setStatusText("Preparing data...");
 
-    if (!feedback) return setStatusText("Failed to get feedback.");
-    const feedbackText =
-      typeof feedback.message.content === "string"
-        ? feedback.message.content
-        : feedback.message.content[0].text;
+      const uuid = generateUUID();
+      const data = {
+        id: uuid,
+        resumePath: uploadedFile.path,
+        imagePath: uploadedImage.path,
+        companyName,
+        jobTitle,
+        jobDescription,
+        feedback: "",
+      };
+      await kv.set(`resume:${uuid}`, JSON.stringify(data));
+      setStatusText("Analyzing...");
 
-    data.feedback = JSON.parse(feedbackText);
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
-    setStatusText("Analysis complete!, redirecting...");
+      console.log("Starting AI feedback request...");
+      const feedback = await ai.feedback(
+        uploadedFile.path,
+        prepareInstructions({ jobTitle, jobDescription, AIResponseFormat })
+      );
+      console.log("AI feedback received:", feedback);
+
+      if (!feedback) {
+        setStatusText("Failed to get feedback.");
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log("Extracting feedback text...");
+      const feedbackText =
+        typeof feedback.message.content === "string"
+          ? feedback.message.content
+          : feedback.message.content[0].text;
+
+      console.log("Feedback text:", feedbackText);
+      console.log("Parsing feedback JSON...");
+      data.feedback = JSON.parse(feedbackText);
+      console.log("Parsed feedback:", data.feedback);
+
+      await kv.set(`resume:${uuid}`, JSON.stringify(data));
+      setStatusText("Analysis complete!");
+
+      console.log("Analysis saved with ID:", uuid);
+
+      setIsProcessing(false);
+    } catch (error) {
+      console.error("Analysis error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      setStatusText(
+        `Error: ${
+          error instanceof Error
+            ? error.message
+            : typeof error === "object" && error !== null
+            ? JSON.stringify(error)
+            : "An unexpected error occurred"
+        }`
+      );
+      setIsProcessing(false);
+    }
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -142,7 +186,7 @@ export default function Home() {
                 <input
                   defaultValue="Company Name"
                   name="CompanyName"
-                  className="w-full  hover:border-indigo-500 transition-colors text-gray-400 px-4 p-2 rounded-sm border bg-white shadow-xl focus:outline-none focus:ring-0 "
+                  className="w-full  hover:border-indigo-500 transition-colors text-gray-600 px-4 p-2 rounded-sm border bg-white shadow-xl focus:outline-none focus:ring-0 "
                 ></input>
               </div>
 
@@ -151,7 +195,7 @@ export default function Home() {
                 <input
                   defaultValue="Job Title"
                   name="JobTitle"
-                  className="w-full  hover:border-indigo-500 transition-colors text-gray-400 px-4 p-2 rounded-sm border bg-white shadow-xl focus:outline-none focus:ring-0 "
+                  className="w-full  hover:border-indigo-500 transition-colors text-gray-600 px-4 p-2 rounded-sm border bg-white shadow-xl focus:outline-none focus:ring-0 "
                 ></input>
               </div>
 
