@@ -5,6 +5,9 @@ import resumeScan2 from "./assets/images/resume-scan-2.gif";
 import { useEffect, useState } from "react";
 import { usePuterStore } from "./lib/puter";
 import { Feedback } from "./types";
+import Summary from "./Components/Summary";
+import ATS from "./Components/ATS";
+import Details from "./Components/Details";
 
 export const meta = () => ({
   title: "Resumind | Review",
@@ -18,7 +21,7 @@ const Resume = () => {
 
   const [imageUrl, setImageUrl] = useState("");
   const [resumeUrl, setResumeUrl] = useState("");
-  const [feedback, setFeedback] = useState <Feedback | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,7 +62,7 @@ const Resume = () => {
     <main className="pt-0">
       <nav className="flex flex-row justify-between items-center p-4 border-gray-300">
         <Link
-          to="/"
+          to="/dashboard"
           className="flex flex-row items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm"
         >
           <img src={backsvg} alt="logo" className="w-2.5 h-2.5" />
