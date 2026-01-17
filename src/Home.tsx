@@ -75,10 +75,17 @@ export default function Home() {
       setStatusText("Analyzing...");
 
       console.log("Starting AI feedback request...");
-      const feedback = await ai.feedback(
-        uploadedFile.path,
-        prepareInstructions({ jobTitle, jobDescription, AIResponseFormat })
-      );
+      console.log("Uploaded file path:", uploadedFile.path);
+      console.log("Job title:", jobTitle);
+      console.log("Job description:", jobDescription);
+      const instructions = prepareInstructions({
+        jobTitle,
+        jobDescription,
+        AIResponseFormat,
+      });
+      console.log("AI instructions:", instructions);
+
+      const feedback = await ai.feedback(uploadedFile.path, instructions);
       console.log("AI feedback received:", feedback);
 
       if (!feedback) {
@@ -93,8 +100,21 @@ export default function Home() {
           ? feedback.message.content
           : (feedback.message?.content as any)?.[0]?.text;
 
-      data.feedback = JSON.parse(feedbackText);
+      console.log("Raw feedback text:", feedbackText);
+
+      // Clean the response if it has markdown code blocks
+      let cleanedFeedback = feedbackText.trim();
+      if (cleanedFeedback.startsWith("```json")) {
+        cleanedFeedback = cleanedFeedback
+          .replace(/```json\n?/g, "")
+          .replace(/```\n?/g, "");
+      } else if (cleanedFeedback.startsWith("```")) {
+        cleanedFeedback = cleanedFeedback.replace(/```\n?/g, "");
+      }
+
+      data.feedback = JSON.parse(cleanedFeedback);
       console.log("Parsed feedback:", data.feedback);
+      console.log("Overall Score:", data.feedback.overallScore);
 
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
       setStatusText("Analysis complete!");

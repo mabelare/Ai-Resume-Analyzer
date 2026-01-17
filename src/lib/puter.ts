@@ -400,10 +400,18 @@ export const usePuterStore = create<PuterStore>((set, get) => {
       setError("Puter.js not available");
       return;
     }
-    if (returnValues === undefined) {
-      returnValues = false;
+    const keys = await puter.kv.list(pattern);
+
+    if (returnValues) {
+      // If returnValues is true, fetch all the values
+      const promises = keys.map(async (key: string) => {
+        const value = await puter.kv.get(key);
+        return value;
+      });
+      return Promise.all(promises);
     }
-    return puter.kv.list(pattern);
+
+    return keys;
   };
 
   const flushKV = async () => {

@@ -241,15 +241,29 @@ export const prepareInstructions = ({
   jobDescription: string;
   AIResponseFormat: string;
 }) =>
-  `You are an expert in ATS (Applicant Tracking System) and resume analysis.
-  Please analyze and rate this resume and suggest how to improve it.
-  The rating can be low if the resume is bad.
-  Be thorough and detailed. Don't be afraid to point out any mistakes or areas for improvement.
-  If there is a lot to improve, don't hesitate to give low scores. This is to help the user to improve their resume.
-  If available, use the job description for the job user is applying to to give more detailed feedback.
-  If provided, take the job description into consideration.
-  The job title is: ${jobTitle}
-  The job description is: ${jobDescription}
-  Provide the feedback using the following format: ${AIResponseFormat}
-  Return the analysis as a JSON object, without any other text and without the backticks.
-  Do not include any other text or comments.`;
+  `CRITICAL INSTRUCTION: Read the resume file attached to this message. Extract the candidate's actual name, skills, experience, and qualifications from the document. Your score MUST be based on comparing what you read in the resume against the job requirements below.
+
+Job Requirements:
+Title: ${jobTitle}
+Description: ${jobDescription}
+
+Scoring Rules - FOLLOW THESE EXACTLY:
+1. If the resume mentions skills/experience that DIRECTLY match the job description → Score 70-100
+2. If the resume has SOME relevant skills but missing key requirements → Score 40-69
+3. If the resume has LITTLE TO NO relevant experience for this job → Score 0-39
+4. DO NOT give a 65 score unless the resume is exactly mediocre
+5. Scores must vary based on actual match quality - no two resumes should get the same score unless they have identical matching quality
+
+Your Analysis MUST:
+- Reference specific skills, job titles, or experience you see in the resume
+- Compare resume content against the job description requirements
+- Give DIFFERENT scores based on how well the resume matches THIS SPECIFIC job
+- Mention the candidate's name or experience from the resume in your tips
+- BE HARSH if the resume doesn't match - scores can be as low as 20-30 for poor matches
+
+Request ID: ${Date.now()}-${Math.random()}
+
+Return your analysis as valid JSON following this format:
+${AIResponseFormat}
+
+IMPORTANT: Return ONLY the JSON object, no markdown, no backticks, no extra text.`;
