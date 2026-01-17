@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "./Dashboard";
-import Auth from "./auth";
-import Home from "./home";
-import Resume from "./resume";
+import Auth from "./auth.tsx";
+import Home from "./Home.tsx";
+import Resume from "./resume.tsx";
 import Wipe from "./Wipe";
 import { usePuterStore } from "./lib/puter";
 
